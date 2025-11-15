@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Library</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+    <h1>Digital Library</h1>
+</header>
+
+<div class="container">
+    <div class="grid">
+
+        <!-- Left Section: Add Book Form -->
+        <div class="card">
+            <h2>Add / Edit Book</h2>
+
+            <form id="bookForm">
+                <input type="hidden" id="bookId" />
+
+                <label>Title</label>
+                <input type="text" id="title" required />
+
+                <label>Author</label>
+                <input type="text" id="author" required />
+
+                <label>Category</label>
+                <select id="category">
+                    <option>Computer Science</option>
+                    <option>Mathematics</option>
+                    <option>Literature</option>
+                    <option>Physics</option>
+                    <option>Other</option>
+                </select>
+
+                <label>Copies</label>
+                <input type="number" id="copies" min="1" value="1" required />
+
+                <label>Year</label>
+                <input type="number" id="year" min="1900" max="2100" value="2024" required />
+
+                <label>Description</label>
+                <textarea id="description" rows="3"></textarea>
+
+                <button type="submit" id="saveBtn">Add Book</button>
+                <button type="button" id="clearBtn" class="secondary">Clear</button>
+            </form>
+
+            <div class="stats">
+                <div class="stat"><b>Total Titles:</b> <span id="totalTitles">0</span></div>
+                <div class="stat"><b>Total Copies:</b> <span id="totalCopies">0</span></div>
+                <div class="stat"><b>Borrowed:</b> <span id="totalBorrowed">0</span></div>
+            </div>
+        </div>
+
+        <!-- Right Section: Book List -->
+        <div class="card">
+            <div class="topbar">
+                <input type="text" id="q" placeholder="Search books..." />
+                <select id="filterCat">
+                    <option value="">All Categories</option>
+                    <option>Computer Science</option>
+                    <option>Mathematics</option>
+                    <option>Literature</option>
+                    <option>Physics</option>
+                    <option>Other</option>
+                </select>
+                <select id="sortBy">
+                    <option value="new">Newest</option>
+                    <option value="title">A–Z</option>
+                    <option value="borrowed">Most Borrowed</option>
+                </select>
+            </div>
+
+            <div id="bookList" class="book-list"></div>
+        </div>
+
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
