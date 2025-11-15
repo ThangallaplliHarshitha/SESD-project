@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Digital Library - Student Mini Project</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --muted:#6b7280; --accent:#4f46e5;
+    --success:#10b981; --danger:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Inter, system-ui, Arial; margin:0; background:var(--bg); color:#111;}
+  header{background:linear-gradient(90deg,#ffffff88, var(--bg)); padding:18px 20px; display:flex;align-items:center;gap:12px;box-shadow:0 1px 0 rgba(0,0,0,0.04)}
+  header h1{margin:0; font-size:18px}
+  .container{max-width:1100px;margin:20px auto;padding:18px;}
+  .grid{display:grid;grid-template-columns: 360px 1fr; gap:18px;}
+  .card{background:var(--card); padding:14px;border-radius:10px; box-shadow: 0 6px 18px rgba(15,23,42,0.04);}
+  label{display:block;font-size:13px;color:var(--muted); margin-bottom:6px}
+  input[type="text"], input[type="number"], select, textarea{
+    width:100%; padding:10px; border-radius:8px; border:1px solid #e6e9ef; font-size:14px;
+    background:#fff; margin-bottom:10px;
+  }
+  .row{display:flex; gap:8px}
+  button{background:var(--accent);color:white;border:0;padding:10px 12px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#fff;color:var(--accent);border:1px solid #e6e9ef}
+  .small{font-size:13px;padding:8px 10px;border-radius:8px}
+  .book-list{display:grid; gap:12px;}
+  .book{display:flex; gap:12px; padding:12px; border-radius:8px; align-items:center; border:1px solid #f0f2f6; background:linear-gradient(180deg,#fff,#fbfdff)}
+  .thumb{width:64px;height:84px;background:#f1f5f9;border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:600}
+  .meta{flex:1}
+  .meta h3{margin:0;font-size:16px}
+  .meta p{margin:6px 0 0 0;color:var(--muted);font-size:13px}
+  .actions{display:flex; gap:8px; align-items:center}
+  .pill{padding:6px 8px;border-radius:999px;font-size:12px}
+  .available{background:#ecfdf5;color:var(--success);border:1px solid #bbf7d0}
+  .borrowed{background:#fff7ed;color:#b45309;border:1px solid #fee7c4}
+  .danger{background:var(--danger);color:white}
+  .topbar{display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap}
+  .stats{display:flex; gap:12px; margin-top:10px; flex-wrap:wrap}
+  .stat{background:#fff;padding:10px;border-radius:8px;min-width:120px;text-align:center}
+  .muted{color:var(--muted);font-size:13px}
+  footer{max-width:1100px;margin:18px auto;color:var(--muted);font-size:13px;text-align:center}
+  @media(max-width:880px){.grid{grid-template-columns:1fr} .thumb{width:48px;height:64px}}
+</style>
+</head>
+<body>
+<header>
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M3 6h14v13H3z" stroke="#4f46e5" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 6V3h10v3" stroke="#4f46e5" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <h1>Digital Library — Simple Web App</h1>
+</header>
+
+<div class="container">
+  <div class="grid">
+    <!-- left: form -->
+    <div class="card">
+      <h2 style="margin-top:0">Add / Edit Book</h2>
+      <form id="bookForm">
+        <input type="hidden" id="bookId" />
+        <label>Title</label>
+        <input type="text" id="title" placeholder="E.g., Computer Networks" required />
+        <label>Author</label>
+        <input type="text" id="author" placeholder="Author name" required />
+        <label>Category</label>
+        <select id="category">
+          <option>Computer Science</option>
+          <option>Mathematics</option>
+          <option>Literature</option>
+          <option>Physics</option>
+          <option>Other</option>
+        </select>
+        <div class="row">
+          <div style="flex:1">
+            <label>Copies</label>
+            <input type="number" id="copies" min="1" value="1" />
+          </div>
+          <div style="flex:1">
+            <label>Year</label>
+            <input type="number" id="year" min="1900" max="2100" value="2024" />
+          </div>
+        </div>
+        <label>Description</label>
+        <textarea id="description" rows="3" placeholder="Short description (optional)"></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px">
+          <button type="submit" id="saveBtn">Add Book</button>
+          <button type="button" id="clearBtn" class="secondary">Clear</button>
+          <button type="button" id="exportBtn" class="secondary small">Export JSON</button>
+          <button type="button" id="importBtn" class="secondary small">Import Sample</button>
+        </div>
+      </form>
+
+      <div class="stats" style="margin-top:14px">
+        <div class="stat">
+          <div class="muted">Total Titles</div>
+          <div id="totalTitles">0</div>
+        </div>
+        <div class="stat">
+          <div class="muted">Total Copies</div>
+          <div id="totalCopies">0</div>
+        </div>
+        <div class="stat">
+          <div class="muted">Borrowed</div>
+          <div id="totalBorrowed">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: controls + list -->
+    <div class="card">
+      <div class="topbar">
+        <input type="text" id="q" placeholder="Search by title or author" style="flex:1;padding:10px;border-radius:8px;border:1px solid #e6e9ef" />
+        <select id="filterCat" class="small">
+          <option value="">All Categories</option>
+          <option>Computer Science</option>
+          <option>Mathematics</option>
+          <option>Literature</option>
+          <option>Physics</option>
+          <option>Other</option>
+        </select>
+        <select id="sortBy" class="small">
+          <option value="new">Newest</option>
+          <option value="title">Title A→Z</option>
+          <option value="borrowed">Most Borrowed</option>
+        </select>
+        <button id="clearAll" class="secondary small">Clear Library</button>
+      </div>
+
+      <div id="bookList" class="book-list"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+Digital Library • Open-source, works offline </code></footer>
+
+<script>
+/* ===== Digital Library (HTML/CSS/JS only) =====
+ Features:
+ - Add / Edit / Delete book (title, author, copies, category, year)
+ - Borrow / Return actions (copy count adjusted)
+ - Search, filter, sort
+ - localStorage persistence
+ - Export JSON & import sample data
+ - Simple stats
+*/
+
+// Utility
+const $ = id => document.getElementById(id);
+
+// Storage key
+const STORAGE_KEY = 'digital_library_books_v1';
+
+// Model: books array of objects {id, title, author, category, copies, year, desc, borrowedCount}
+let books = [];
+
+/* ===== Persistence ===== */
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    books = raw ? JSON.parse(raw) : [];
+  } catch(e){ books = [] }
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+}
+
+/* ===== Sample Data ===== */
+const sampleBooks = [
+  {id:uid(), title:"Introduction to Algorithms", author:"Cormen", category:"Computer Science", copies:3, year:2009, desc:"Classic algorithms", borrowedCount:1},
+  {id:uid(), title:"Discrete Mathematics", author:"Rosen", category:"Mathematics", copies:2, year:2012, desc:"Foundations for CS", borrowedCount:0},
+  {id:uid(), title:"Pride and Prejudice", author:"Jane Austen", category:"Literature", copies:1, year:1813, desc:"Classic novel", borrowedCount:0},
+  {id:uid(), title:"Fundamentals of Physics", author:"Halliday", category:"Physics", copies:4, year:2017, desc:"Physics essentials", borrowedCount:2}
+];
+
+/* ===== UI render ===== */
+function render() {
+  const list = $('bookList');
+  list.innerHTML = '';
+  const q = $('q').value.trim().toLowerCase();
+  const cat = $('filterCat').value;
+  const sort = $('sortBy').value;
+
+  let filtered = books.filter(b=>{
+    if(cat && b.category !== cat) return false;
+    if(!q) return true;
+    return b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
+  });
+
+  if(sort === 'title') filtered.sort((a,b)=>a.title.localeCompare(b.title));
+  else if(sort === 'borrowed') filtered.sort((a,b)=>b.borrowedCount - a.borrowedCount);
+  else filtered.sort((a,b)=> b._created - a._created || a.title.localeCompare(b.title));
+
+  for(const b of filtered){
+    const el = document.createElement('div'); el.className='book';
+    el.innerHTML = `
+      <div class="thumb">${b.title.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase()}</div>
+      <div class="meta">
+        <h3>${escapeHtml(b.title)}</h3>
+        <p class="muted">${escapeHtml(b.author)} • ${b.category} • ${b.year}</p>
+        <p style="margin-top:8px;color:#374151">${escapeHtml(b.desc||'No description')}</p>
+      </div>
+      <div class="actions">
+        <div style="text-align:right">
+          <div class="pill ${b.copies - (b.borrowed||0) > 0 ? 'available' : 'borrowed'}" title="available copies">
+            ${Math.max(0, b.copies - (b.borrowed||0))} available
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:6px">Borrowed: ${b.borrowed||0}</div>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <button class="small" onclick="borrow('${b.id}')">Borrow</button>
+          <button class="small secondary" onclick="returnBook('${b.id}')">Return</button>
+          <button class="small" style="margin-top:6px" onclick="editBook('${b.id}')">Edit</button>
+          <button class="small danger" style="margin-top:6px" onclick="deleteBook('${b.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(el);
+  }
+
+  updateStats();
+}
+
+function updateStats(){
+  const totalTitles = books.length;
+  const totalCopies = books.reduce((s,b)=>s+(b.copies||0),0);
+  const totalBorrowed = books.reduce((s,b)=>s+(b.borrowed||0),0);
+  $('totalTitles').innerText = totalTitles;
+  $('totalCopies').innerText = totalCopies;
+  $('totalBorrowed').innerText = totalBorrowed;
+}
+
+/* ===== CRUD ===== */
+function uid(){ return 'b_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4) }
+function addBook(book){
+  book._created = Date.now();
+  books.push(book);
+  save(); render();
+}
+function updateBook(id, data){
+  const idx = books.findIndex(b=>b.id===id);
+  if(idx>=0){
+    books[idx] = {...books[idx], ...data};
+    save(); render();
+  }
+}
+function deleteBook(id){
+  if(!confirm('Delete this title?')) return;
+  books = books.filter(b=>b.id!==id);
+  save(); render();
+}
+
+/* ===== Borrow / Return ===== */
+function borrow(id){
+  const book = books.find(b=>b.id===id);
+  if(!book) return;
+  const available = (book.copies||0) - (book.borrowed||0);
+  if(available <= 0){ alert('No copies available to borrow.'); return; }
+  book.borrowed = (book.borrowed||0) + 1;
+  book.borrowedCount = (book.borrowedCount||0) + 1;
+  save(); render();
+}
+function returnBook(id){
+  const book = books.find(b=>b.id===id);
+  if(!book) return;
+  if((book.borrowed||0) <= 0){ alert('No borrowed copies to return.'); return; }
+  book.borrowed = Math.max(0, (book.borrowed||0) - 1);
+  save(); render();
+}
+
+/* ===== Form handling ===== */
+$('bookForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const id = $('bookId').value;
+  const title = $('title').value.trim();
+  const author = $('author').value.trim();
+  const category = $('category').value;
+  const copies = parseInt($('copies').value) || 1;
+  const year = parseInt($('year').value) || new Date().getFullYear();
+  const desc = $('description').value.trim();
+
+  if(!title || !author){ alert('Title and author are required'); return; }
+  if(id){
+    updateBook(id, { title, author, category, copies, year, desc });
+    resetForm();
+    return;
+  }
+  addBook({ id: uid(), title, author, category, copies, year, desc, borrowed:0, borrowedCount:0 });
+  resetForm();
+});
+
+function editBook(id){
+  const b = books.find(x=>x.id===id);
+  if(!b) return;
+  $('bookId').value = b.id;
+  $('title').value = b.title;
+  $('author').value = b.author;
+  $('category').value = b.category;
+  $('copies').value = b.copies;
+  $('year').value = b.year;
+  $('description').value = b.desc || '';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+$('clearBtn').addEventListener('click', resetForm);
+function resetForm(){
+  $('bookForm').reset();
+  $('bookId').value = '';
+  $('saveBtn').innerText = 'Add Book';
+}
+
+/* ===== Search / Filter / Sort handlers ===== */
+['q','filterCat','sortBy'].forEach(id=>{
+  $(id).addEventListener('input', ()=>render());
+});
+
+/* ===== Export / Import ===== */
+$('exportBtn').addEventListener('click', ()=>{
+  const data = JSON.stringify(books,null,2);
+  const blob = new Blob([data],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'digital-library.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('importBtn').addEventListener('click', ()=>{
+  if(!confirm('Import sample data? This will append sample titles.')) return;
+  // avoid duplicate ids by generating new ids
+  const appended = sampleBooks.map(s=> ({...s, id: uid(), _created: Date.now()}));
+  books = books.concat(appended);
+  save(); render();
+});
+
+/* ===== Clear all ===== */
+$('clearAll').addEventListener('click', ()=>{
+  if(!confirm('Clear entire library? This cannot be undone.')) return;
+  books = [];
+  save(); render();
+});
+
+/* ===== Utils ===== */
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+/* ===== Init ===== */
+function init(){
+  load();
+  // If no data, add sample
+  if(books.length===0){
+    // Add lightly: keep initial sample but let user import explicitly; for demonstration we'll not auto-add.
+  }
+  render();
+}
+init();
+
+/* ===== For demonstration: expose some methods to console ===== */
+window._lib = {books, save, load, render};
+</script>
+</body>
+</html>
